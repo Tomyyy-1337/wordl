@@ -45,7 +45,7 @@ fn main() {
     println!("Es wurden {} Wörter mit 5 Buchstaben geladen", contents.len());
     
     loop {
-        let chars = contents.iter().cloned().flatten().collect::<HashSet<_>>().into_iter().collect::<Vec<_>>();
+        let mut chars = contents.iter().cloned().flatten().collect::<HashSet<_>>().into_iter().collect::<Vec<_>>();
         let mut char_count = vec![HashMap::new(); 5];
         for i in 0..5 {
             for c in chars.iter() {
@@ -53,10 +53,10 @@ fn main() {
             }
         }
         let char_prob = char_count.iter()
-            .map(| line |
-                line.iter().map(|(c,count)| (c, *count as f64 / contents.len() as f64)).collect::<HashMap<_,_>>()
-            ).collect::<Vec<_>>();
-
+        .map(| line |
+            line.iter().map(|(c,count)| (c, *count as f64 / contents.len() as f64)).collect::<HashMap<_,_>>()
+        ).collect::<Vec<_>>();
+        
         contents.sort_by_cached_key(|word| {
             let mut score = 0;
             for (i,c) in word.iter().enumerate() {
@@ -64,16 +64,16 @@ fn main() {
             }
             -score
         });
-
+        
         println!("================================");
         println!("{} mögliche Wörter verbleibend", contents.len());
         println!("Empfehlungen:");
 
-        for (i,w) in contents.iter().enumerate().take(9) {
+        for (i,w) in contents.iter().enumerate().take(16) {
             println!("{:2}: {}", i+1, w.iter().fold(String::new(), |mut a, c| {a.push(*c); a}));
         }
 
-        print!("Wähle ein wort [1-9]: ");
+        print!("Wähle ein wort [1-16]: ");
         let mut input = String::new();
         std::io::stdout().flush().unwrap();
         std::io::stdin().read_line(&mut input).unwrap();
