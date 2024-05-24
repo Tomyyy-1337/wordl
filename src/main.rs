@@ -9,7 +9,7 @@ fn main() {
         .collect::<HashSet<_>>()
         .into_iter()
         .collect();
-
+        
     let size = contents.len();
     contents = contents.into_iter()
         .filter(|word| word.len() == 5)
@@ -45,7 +45,7 @@ fn main() {
     println!("Es wurden {} Wörter mit 5 Buchstaben geladen", contents.len());
     
     loop {
-        let mut chars = contents.iter().cloned().flatten().collect::<HashSet<_>>().into_iter().collect::<Vec<_>>();
+        let chars = contents.iter().cloned().flatten().collect::<HashSet<_>>().into_iter().collect::<Vec<_>>();
         let mut char_count = vec![HashMap::new(); 5];
         for i in 0..5 {
             for c in chars.iter() {
