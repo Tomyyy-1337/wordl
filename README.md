@@ -1,7 +1,7 @@
 # Wordl solver
 
 Run with german dictionary:
-```console
+```sh
 cargo run --release german.txt
 ```
 
