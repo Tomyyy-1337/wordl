@@ -6,6 +6,6 @@ cargo run --release german.txt
 ```
 
 Run with english dictionary:
-```console
+```sh
 cargo run --release english.txt
 ```
