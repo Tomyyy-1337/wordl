@@ -16,7 +16,7 @@ fn main() {
         .collect::<HashSet<_>>()
         .into_iter()
         .collect();
-    
+
     if size != contents.len() {
         println!("Die Wörterliste wurde auf {} Wörter gefiltert", contents.len());
         print!("Änderungen speichern? [y/n]: ");
@@ -43,20 +43,34 @@ fn main() {
     }
 
     println!("Es wurden {} Wörter mit 5 Buchstaben geladen", contents.len());
-    
+
     loop {
-        let chars = contents.iter().cloned().flatten().collect::<HashSet<_>>().into_iter().collect::<Vec<_>>();
+        solve(contents.clone());
+        print!("Neues Spiel starten? [y/n]: ");
+        std::io::stdout().flush().unwrap();
+        let mut input = String::new();
+        std::io::stdin().read_line(&mut input).unwrap();
+        if input.to_lowercase().trim() != "y" {
+            break;
+        }
+    }
+    
+}
+
+fn solve(mut contents: Vec<Vec<char>>) {
+    while contents.len() > 1 {
+        let chars: Vec<char> = contents.iter().flatten().collect::<HashSet<_>>().into_iter().cloned().collect();
         let mut char_count = vec![HashMap::new(); 5];
         for i in 0..5 {
             for c in chars.iter() {
                 char_count[i].insert(c, contents.iter().filter(|w| w[i] == *c).count());
             }
         }
-        let char_prob = char_count.iter()
-        .map(| line |
-            line.iter().map(|(c,count)| (c, *count as f64 / contents.len() as f64)).collect::<HashMap<_,_>>()
-        ).collect::<Vec<_>>();
-        
+        let char_prob = char_count.into_iter()
+            .map(| line |
+                line.iter().map(|(&c,count)| (c, *count as f64 / contents.len() as f64)).collect::<HashMap<_,_>>()
+            ).collect::<Vec<_>>();
+
         contents.sort_by_cached_key(|word| {
             let mut score = 0;
             for (i,c) in word.iter().enumerate() {
@@ -64,7 +78,7 @@ fn main() {
             }
             -score
         });
-        
+
         println!("================================");
         println!("{} mögliche Wörter verbleibend", contents.len());
         println!("Empfehlungen:");
@@ -102,4 +116,5 @@ fn main() {
             } 
         }
     }
+    println!("Das Wort ist: {}", contents.iter().next().unwrap().iter().fold(String::new(), |mut a, c| {a.push(*c); a}));
 }
