@@ -60,40 +60,53 @@ fn main() {
 fn solve(mut contents: Vec<Vec<char>>) {
     while contents.len() > 1 {
         let chars: Vec<char> = contents.iter().flatten().collect::<HashSet<_>>().into_iter().cloned().collect();
-        let mut char_count = vec![HashMap::new(); 5];
-        for i in 0..5 {
-            for c in chars.iter() {
-                char_count[i].insert(c, contents.iter().filter(|w| w[i] == *c).count());
-            }
-        }
-        let char_prob = char_count.into_iter()
-            .map(| line |
-                line.iter().map(|(&c,count)| (c, *count as f64 / contents.len() as f64)).collect::<HashMap<_,_>>()
-            ).collect::<Vec<_>>();
+        let char_prob: Vec<HashMap<char, f32>> = (0..5).map(|i| {
+            chars.iter().fold(HashMap::new(), |mut map, c| {
+                map.insert(*c, contents.iter().filter(|w| w[i] == *c).count() as f32 / contents.len() as f32);
+                map
+            }) 
+        }).collect();
 
         contents.sort_by_cached_key(|word| {
-            let mut score = 0;
-            for (i,c) in word.iter().enumerate() {
-                score += (char_prob[i].get(&c).unwrap_or(&0.0) * 10000.0) as i32 / word.iter().filter(|e| *e == c).count() as i32;
-            }
-            -score
+            -word.iter().enumerate().map(|(i, c)| 
+                (char_prob[i].get(&c).unwrap_or(&0.0) * 100000.0) as i32 / word.iter().filter(|e| *e == c).count() as i32
+            ).sum::<i32>()
         });
 
         println!("================================");
         println!("{} mögliche Wörter verbleibend", contents.len());
         println!("Empfehlungen:");
 
-        for (i,w) in contents.iter().enumerate().take(16) {
-            println!("{:2}: {}", i+1, w.iter().fold(String::new(), |mut a, c| {a.push(*c); a}));
+        let mut input = "n".to_string();
+        let mut page = 0;
+        while input == "n" && page < contents.len() / 16 + 1 {
+            println!("Seite {} von {}. [n] show more", page + 1, (contents.len()-1)/16+1);
+            for (i,w) in contents.iter().enumerate().skip(page * 16).take(16) {
+                println!("{:2}: {}", i+1, w.iter().fold(String::new(), |mut a, c| {a.push(*c); a}));
+            }
+            print!("Wähle ein wort [1.. | <word>]: ");
+            std::io::stdout().flush().unwrap();
+            input = String::new();
+            std::io::stdin().read_line(&mut input).unwrap();
+            input = input.trim().to_ascii_lowercase().to_string();
+            page += 1;
         }
-
-        print!("Wähle ein wort [1-16]: ");
-        let mut input = String::new();
-        std::io::stdout().flush().unwrap();
-        std::io::stdin().read_line(&mut input).unwrap();
-        let index = input.trim().parse::<usize>().unwrap();
-
-        let best = contents[index-1].clone();
+        if input == "n" {
+            println!("Keine weiteren Wörter verfügbar");
+            print!("Wähle ein wort [1.. | <word>]: ");
+            std::io::stdout().flush().unwrap();
+            input = String::new();
+            std::io::stdin().read_line(&mut input).unwrap();
+            input = input.trim().to_ascii_lowercase().to_string();
+        }
+        
+        println!("input: {}", input);
+        let best = if input.len() == 5 {
+            input.chars().collect::<Vec<_>>()
+        } else {
+            let index = input.parse::<usize>().unwrap();
+            contents[index-1].clone()
+        };
 
         println!("{} wurde gewählt. Welche Buchstaben waren korrekt? 1 -> Falsch, 2 -> Existiert, 3 -> Korrekt", best.iter().fold(String::new(), |mut a, c| {a.push(*c); a}));
 
@@ -107,14 +120,18 @@ fn solve(mut contents: Vec<Vec<char>>) {
             })
             .collect();
 
-        for (i,c) in input.iter().enumerate() {
+        for (i,(c, b)) in input.iter().zip(best.into_iter()).enumerate() {
             match c {
-                '1' => contents.retain(|w| !w.contains(&best[i])),
-                '2' => contents.retain(|w| w.contains(&best[i]) && w[i] != best[i]),
-                '3' => contents.retain(|w| w[i] == best[i]),
-                _ => ()
+                '1' => contents.retain(|w| !w.contains(&b)),
+                '2' => contents.retain(|w| w.contains(&b) && w[i] != b),
+                '3' => contents.retain(|w| w[i] == b),
+                _ => println!("Ungültige Eingabe. Verhalten nicht definiert"),
             } 
         }
     }
-    println!("Das Wort ist: {}", contents.iter().next().unwrap().iter().fold(String::new(), |mut a, c| {a.push(*c); a}));
+    if contents.len() == 1 {
+        println!("Das Wort ist: {}", contents.iter().next().unwrap().iter().fold(String::new(), |mut a, c| {a.push(*c); a}));
+    } else {
+        println!("Keine Lösung gefunden");
+    }
 }
